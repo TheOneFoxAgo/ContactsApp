@@ -40,10 +40,10 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         val hasPermissions =
             (permissions.all { checkSelfPermission(it) == PackageManager.PERMISSION_GRANTED })
-        val service = ContactService()
+        val service = ContactService(contentResolver)
         val contactsFlow: MutableStateFlow<List<Contact>> = MutableStateFlow(
             if (hasPermissions) {
-                service.getContacts(this)
+                service.getContacts()
             } else {
                 listOf()
             }
@@ -56,7 +56,7 @@ class MainActivity : ComponentActivity() {
         if (!hasPermissions) {
             registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { results ->
                 if (results.values.all { it }) {
-                    contactsFlow.value = service.getContacts(this)
+                    contactsFlow.value = service.getContacts()
                 } else {
                     finish()
                 }

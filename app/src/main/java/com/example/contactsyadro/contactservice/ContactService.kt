@@ -1,41 +1,60 @@
 package com.example.contactsyadro.contactservice
 
-import android.content.Context
-import android.net.Uri
+import android.content.ContentResolver
+import android.database.Cursor
 import android.provider.ContactsContract
-import android.provider.ContactsContract.CommonDataKinds.Phone
 import com.example.contactsyadro.Contact
 
-class ContactService {
-    fun getContacts(context: Context) : List<Contact> {
-        val contentUri = Uri.withAppendedPath(
-            ContactsContract.Contacts.CONTENT_URI,
-            ContactsContract.Contacts.Entity.CONTENT_DIRECTORY
-        )
-        val resolver = context.contentResolver
+class ContactService(private val resolver: ContentResolver) {
+    fun getContacts() : List<Contact> {
+        val lst = mutableListOf<Contact>()
+        contactsIds()?.use { contactCursor ->
+            val idIdx = contactCursor.getColumnIndex(ContactsContract.Contacts._ID)
+            val nameIdx = contactCursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME)
+            while (contactCursor.moveToNext()) {
+                val id = contactCursor.getString(idIdx)
+                val name = contactCursor.getString(nameIdx)
+                contactsPhones(id)?.use { phoneCursor ->
+                    val phoneIdx = phoneCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
+                    while (phoneCursor.moveToNext()) {
+                        val number = phoneCursor.getString(phoneIdx)
+                        lst.add(Contact(id, name, number))
+                    }
+                }
+            }
+        }
+        return lst
+    }
+    private fun contactsIds() : Cursor? {
+        val idUri = ContactsContract.Contacts.CONTENT_URI
         val projection = arrayOf(
-            ContactsContract.Contacts.Entity._ID,
-            ContactsContract.Contacts.Entity.DISPLAY_NAME,
-            Phone.NUMBER,
+            ContactsContract.Contacts._ID,
+            ContactsContract.Contacts.DISPLAY_NAME,
         )
-        val selectionClause = "${ContactsContract.Data.MIMETYPE} = '${Phone.CONTENT_ITEM_TYPE}'"
+        val selectionClosure = "${ContactsContract.Contacts.HAS_PHONE_NUMBER} = 1"
         val sortOrder = "${ContactsContract.Contacts.DISPLAY_NAME} ASC"
-
-        val cursor = resolver.query(
-            contentUri,
+        return resolver.query(
+            idUri,
             projection,
-            selectionClause,
+            selectionClosure,
             null,
             sortOrder,
         )
-        val lst = mutableListOf<Contact>()
-        cursor?.use {
-            val (idIdx, nameIdx, numberIdx) = projection.map { name -> it.getColumnIndex(name) }
-            while (it.moveToNext()) {
-                lst.add(Contact(it.getString(idIdx), it.getString(nameIdx), it.getString(numberIdx)))
-            }
-
-        }
-        return lst
+    }
+    private fun contactsPhones(id: String) : Cursor? {
+        val phonesUri = ContactsContract.CommonDataKinds.Phone.CONTENT_URI
+        val projection = arrayOf(
+            ContactsContract.CommonDataKinds.Phone.NUMBER
+        )
+        val selection = "${ContactsContract.CommonDataKinds.Phone.CONTACT_ID} = ?"
+        val selectionArg = arrayOf(id)
+        val cursor = resolver.query(
+            phonesUri,
+            projection,
+            selection,
+            selectionArg,
+            null,
+        )
+        return cursor
     }
 }
