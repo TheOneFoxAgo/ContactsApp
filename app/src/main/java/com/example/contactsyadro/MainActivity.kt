@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.contactsyadro.contactservice.ContactService
 import com.example.contactsyadro.ui.theme.ContactsYadroTheme
 
 class MainActivity : ComponentActivity() {
@@ -27,11 +28,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        val contacts = listOf(
-            Contact("1", "first", "+777777777"),
-            Contact("2", "second", "+888888888"),
-            Contact("3", "third", "+999999999"),
-        )
+        val service = ContactService()
+        val contacts = service.getContacts(this)
+//            listOf(
+//            Contact("1", "first", "+777777777"),
+//            Contact("2", "second", "+888888888"),
+//            Contact("3", "third", "+999999999"),
+//        )
         setContent {
             ContactsYadroTheme {
                 Scaffold(
