@@ -9,8 +9,8 @@ class ContactService(private val resolver: ContentResolver) {
     fun getContacts() : List<Contact> {
         val lst = mutableListOf<Contact>()
         contactsIds()?.use { contactCursor ->
-            val idIdx = contactCursor.getColumnIndex(ContactsContract.Contacts._ID)
-            val nameIdx = contactCursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME)
+            val idIdx = contactCursor.getColumnIndex(ContactsContract.RawContacts._ID)
+            val nameIdx = contactCursor.getColumnIndex(ContactsContract.RawContacts.DISPLAY_NAME_PRIMARY)
             while (contactCursor.moveToNext()) {
                 val id = contactCursor.getString(idIdx)
                 val name = contactCursor.getString(nameIdx)
@@ -26,17 +26,16 @@ class ContactService(private val resolver: ContentResolver) {
         return lst
     }
     private fun contactsIds() : Cursor? {
-        val idUri = ContactsContract.Contacts.CONTENT_URI
+        val idUri = ContactsContract.RawContacts.CONTENT_URI
         val projection = arrayOf(
-            ContactsContract.Contacts._ID,
-            ContactsContract.Contacts.DISPLAY_NAME,
+            ContactsContract.RawContacts._ID,
+            ContactsContract.RawContacts.DISPLAY_NAME_PRIMARY,
         )
-        val selectionClosure = "${ContactsContract.Contacts.HAS_PHONE_NUMBER} = 1"
-        val sortOrder = "${ContactsContract.Contacts.DISPLAY_NAME} ASC"
+        val sortOrder = "${ContactsContract.RawContacts.DISPLAY_NAME_PRIMARY} ASC"
         return resolver.query(
             idUri,
             projection,
-            selectionClosure,
+            null,
             null,
             sortOrder,
         )
@@ -46,7 +45,7 @@ class ContactService(private val resolver: ContentResolver) {
         val projection = arrayOf(
             ContactsContract.CommonDataKinds.Phone.NUMBER
         )
-        val selection = "${ContactsContract.CommonDataKinds.Phone.CONTACT_ID} = ?"
+        val selection = "${ContactsContract.CommonDataKinds.Phone.RAW_CONTACT_ID} = ?"
         val selectionArg = arrayOf(id)
         val cursor = resolver.query(
             phonesUri,
