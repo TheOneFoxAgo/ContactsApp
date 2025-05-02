@@ -1,9 +1,12 @@
 package com.example.contactsyadro
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,25 +20,51 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.contactsyadro.contactservice.ContactService
 import com.example.contactsyadro.ui.theme.ContactsYadroTheme
+import kotlinx.coroutines.flow.MutableStateFlow
 
 class MainActivity : ComponentActivity() {
+    private val permissions = listOf(
+        Manifest.permission.WRITE_CONTACTS,
+        Manifest.permission.READ_CONTACTS,
+    )
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val hasPermissions =
+            (permissions.all { checkSelfPermission(it) == PackageManager.PERMISSION_GRANTED })
         val service = ContactService()
-        val contacts = service.getContacts(this)
-//            listOf(
+        val contactsFlow: MutableStateFlow<List<Contact>> = MutableStateFlow(
+            if (hasPermissions) {
+                service.getContacts(this)
+            } else {
+                listOf()
+            }
+        )
+//        val contacts = listOf(
 //            Contact("1", "first", "+777777777"),
 //            Contact("2", "second", "+888888888"),
 //            Contact("3", "third", "+999999999"),
 //        )
+        if (!hasPermissions) {
+            registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { results ->
+                if (results.values.all { it }) {
+                    contactsFlow.value = service.getContacts(this)
+                } else {
+                    finish()
+                }
+            }.launch(permissions.toTypedArray())
+        }
+
         setContent {
+            val contacts by contactsFlow.collectAsStateWithLifecycle()
             ContactsYadroTheme {
                 Scaffold(
                     topBar = {
