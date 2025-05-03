@@ -1,6 +1,7 @@
 package com.example.contactsyadro
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -32,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.contactsyadro.contactservice.ContactService
 import com.example.contactsyadro.ui.theme.ContactsYadroTheme
@@ -39,7 +41,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 
 class MainActivity : ComponentActivity() {
     private val permissions = listOf(
-        Manifest.permission.WRITE_CONTACTS,
+        Manifest.permission.CALL_PHONE,
         Manifest.permission.READ_CONTACTS,
     )
     @OptIn(ExperimentalMaterial3Api::class)
@@ -73,7 +75,7 @@ class MainActivity : ComponentActivity() {
                     topBar = {
                         TopAppBar(
                             title = {
-                                Text("Ядерные контакты")
+                                Text("Contacts app")
                             }
                         )
                     },
@@ -82,8 +84,11 @@ class MainActivity : ComponentActivity() {
                     Contacts(
                         contacts,
                         Modifier.padding(innerPadding)
-                    ) { }
-
+                    ) { contact ->
+                        val intent = Intent(Intent.ACTION_CALL)
+                        intent.data = "tel:${contact.number}".toUri()
+                        startActivity(intent)
+                    }
                 }
             }
         }
@@ -99,7 +104,7 @@ fun Contacts(
     modifier: Modifier = Modifier,
     onTap: (Contact) -> Unit,
 ) {
-    val grouped: Map<Char, List<Contact>> = remember {
+    val grouped: Map<Char, List<Contact>> = remember(contacts) {
         contacts.groupBy { it.name[0] }
     }
     LazyColumn(modifier, contentPadding = PaddingValues(8.dp)) {
