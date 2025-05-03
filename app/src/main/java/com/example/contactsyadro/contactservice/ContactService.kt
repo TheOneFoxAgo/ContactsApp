@@ -32,11 +32,13 @@ class ContactService(private val resolver: ContentResolver) {
             ContactsContract.RawContacts.DISPLAY_NAME_PRIMARY,
         )
         val sortOrder = "${ContactsContract.RawContacts.DISPLAY_NAME_PRIMARY} ASC"
+        val selection = "${ContactsContract.RawContacts.ACCOUNT_TYPE} = ?"
+        val selectionArgs = arrayOf("com.android.local")
         return resolver.query(
             idUri,
             projection,
-            null,
-            null,
+            selection,
+            selectionArgs,
             sortOrder,
         )
     }

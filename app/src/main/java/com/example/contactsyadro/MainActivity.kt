@@ -56,11 +56,6 @@ class MainActivity : ComponentActivity() {
                 listOf()
             }
         )
-//        val contacts = listOf(
-//            Contact("1", "first", "+777777777"),
-//            Contact("2", "second", "+888888888"),
-//            Contact("3", "third", "+999999999"),
-//        )
         if (!hasPermissions) {
             registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { results ->
                 if (results.values.all { it }) {
@@ -138,8 +133,7 @@ fun ContactCard(
             )
             Column {
                 Text(contact.name, fontWeight = FontWeight.Bold)
-                Text(contact.number)
-                Text(contact.id)
+                Text(contact.number + " (mobile)")
             }
         }
     }
